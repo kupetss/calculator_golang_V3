@@ -7,7 +7,7 @@ Git
 
 ### Запуск
 ```cmd
-git clone https://github.com/kupetss/calculator_golangV3
+git clone https://github.com/kupetss/calculator_golang_V3
 cd calculator_golangV3
 go mod tidy
 cd main
