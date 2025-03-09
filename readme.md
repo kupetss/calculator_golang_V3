@@ -14,6 +14,42 @@ cd main
 go run main.go
 ```
 ##### Приложение поддерживает post запросы с json формата {"expression": "ваше выражение"}
+
+### Пример работы для cmd:
+Запрос:
+```
+curl -X POST http://localhost:8080/api/v1/calculate -H "Content-Type: application/json" -d "{\"expression\": \"2 + 2 * (3 - 1)\"}"
+```
+На выходе получаем ID
+```
+ID
+```
+Для того что бы получить ответ:
+```
+curl -X GET http://localhost:8080/api/v1/expressions/ID
+```
+```
+Резутат
+```
+
+##### Пример
+Запрос:
+```
+curl -X POST http://localhost:8080/api/v1/calculate -H "Content-Type: application/json" -d "{\"expression\": \"2 + 2 * (3 - 1)\"}"
+```
+На выходе получаем ID
+```
+{"id":2559269320730327156}
+```
+Для того что бы получить ответ:
+```
+curl -X GET http://localhost:8080/api/v1/expressions/2559269320730327156
+```
+```
+{"res":{"id":2559269320730327156,"status":"ok","result":6}}
+```
+
+
 ### Пример работы для Power Shell:
 ```bash
 $response = Invoke-WebRequest -Uri http://localhost:8080/api/v1/calculate -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"expression": "2 + 2 * (3 - 1)"}'
@@ -54,36 +90,3 @@ $response.Content
 {"res":{"id":501445037495581358,"status":"ok","result":6}}
 ```
 
-### Пример работы для cmd:
-Запрос:
-```
-curl -X POST http://localhost:8080/api/v1/calculate -H "Content-Type: application/json" -d "{\"expression\": \"2 + 2 * (3 - 1)\"}"
-```
-На выходе получаем ID
-```
-ID
-```
-Для того что бы получить ответ:
-```
-curl -X GET http://localhost:8080/api/v1/expressions/ID
-```
-```
-Резутат
-```
-
-##### Пример
-Запрос:
-```
-curl -X POST http://localhost:8080/api/v1/calculate -H "Content-Type: application/json" -d "{\"expression\": \"2 + 2 * (3 - 1)\"}"
-```
-На выходе получаем ID
-```
-{"id":2559269320730327156}
-```
-Для того что бы получить ответ:
-```
-curl -X GET http://localhost:8080/api/v1/expressions/2559269320730327156
-```
-```
-{"res":{"id":2559269320730327156,"status":"ok","result":6}}
-```

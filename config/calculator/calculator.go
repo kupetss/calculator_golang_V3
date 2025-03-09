@@ -35,7 +35,6 @@ var T_ADD int = 0
 var T_SUB int = 0
 var T_MUL int = 0
 var T_DIV int = 0
-var url = "http://localhost:8080/internal/task"
 
 func Trim(s string) string {
 	var out []string
@@ -97,16 +96,6 @@ func Eval(e string) (string, error) {
 	e = strings.Replace(e, "+", " + ", -1)
 	e = strings.Replace(e, "-", " - ", -1)
 	p := strings.Split(e, " ")
-
-	for i := 0; i < len(p); i++ {
-		if p[i] == "-" && (i == 0 || strings.Contains("+-/*", p[i-1])) {
-			if i+1 < len(p) {
-				p[i+1] = "-" + p[i+1]
-				p = append(p[:i], p[i+1:]...)
-			}
-		}
-	}
-
 	if strings.Contains("+-/*", p[0]) {
 		return "", errors.New("invalid")
 	}
@@ -262,27 +251,6 @@ func Eval(e string) (string, error) {
 	return fmt.Sprintf("%f", out), nil
 }
 
-var writeToFile = func(id int, result float64) error {
-	file, err := os.OpenFile("database_test/results_test.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	newRes := structs.ResponseResult{
-		Id:     id,
-		Status: "ok",
-		Result: result,
-	}
-
-	encoder := json.NewEncoder(file)
-	if err := encoder.Encode(newRes); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func Calc(e string, id int) (float64, error) {
 	open := 0
 	start := -1
@@ -317,7 +285,20 @@ func Calc(e string, id int) (float64, error) {
 	}
 	out1, _ := strconv.ParseFloat(out, 64)
 
-	if err := writeToFile(id, out1); err != nil {
+	file, err := os.OpenFile("database/results.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	newRes := structs.ResponseResult{
+		Id:     id,
+		Status: "ok",
+		Result: out1,
+	}
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(newRes); err != nil {
 		return 0, err
 	}
 
