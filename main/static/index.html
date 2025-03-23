@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .history {
+            margin-top: 40px;
+        }
+        .history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .history li {
+            margin-bottom: 10px;
+        }
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Калькулятор</h1>
+        <input type="text" id="expression" placeholder="Введите выражение (например, 2 + 3)">
+        <button onclick="calculate()">Вычислить</button>
+        <div class="result">
+            <h2>Результат:</h2>
+            <label id="result"></label>
+        </div>
+        <div class="history">
+            <h2>История вычислений</h2>
+            <ul id="history-list"></ul>
+        </div>
+    </div>
+
+    <script>
+       async function calculate() {
+    console.log("Функция calculate вызвана");
+    const expression = document.getElementById('expression').value;
+    const resultElement = document.getElementById('result');
+
+    if (!expression) {
+        resultElement.textContent = "Пожалуйста, введите выражение.";
+        return;
+    }
+
+    try {
+        console.log("Отправка выражения на сервер:", expression);
+        const createResponse = await fetch('http://localhost:8080/api/v1/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ expression: expression }),
+        });
+
+        if (!createResponse.ok) {
+            const errorData = await createResponse.json();
+            throw new Error(errorData.error || "Ошибка при создании задачи");
+        }
+
+        const createData = await createResponse.json();
+        const taskId = createData.id;
+        console.log("Получен ID задачи:", taskId);
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const checkResult = async () => {
+            console.log("Проверка результата для ID:", taskId);
+            const getResultResponse = await fetch(`http://localhost:8080/api/v1/expressions/${taskId}`);
+            if (!getResultResponse.ok) {
+                throw new Error("Ошибка при получении результата");
+            }
+
+            const resultData = await getResultResponse.json();
+            console.log("Ответ от сервера:", resultData);
+
+            if (resultData.res && resultData.res.status === "ok") {
+                console.log("Результат:", resultData.res.result);
+                resultElement.textContent = resultData.res.result;
+                loadHistory();
+            } else if (resultData.res && resultData.res.status === "pending") {
+                setTimeout(checkResult, 1000);
+            } else {
+                throw new Error("Некорректный формат ответа от сервера");
+            }
+        };
+
+        checkResult();
+    } catch (error) {
+        console.error("Ошибка:", error);
+        resultElement.textContent = `Ошибка: ${error.message}`;
+    }
+}
+
+async function loadHistory() {
+        const historyList = document.getElementById('history-list');
+        const response = await fetch('http://localhost:8080/api/v1/history');
+        if (!response.ok) {
+            console.error('Ошибка при загрузке истории');
+            return;
+        }
+        const data = await response.json();
+        historyList.innerHTML = '';
+
+        data.history.reverse().forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = `Выражение: ${item.expression}, Результат: ${item.result}`;
+            historyList.appendChild(li);
+        });
+    }
+
+    window.onload = loadHistory;
+
+        window.onload = loadHistory;
+    </script>
+</body>
+</html>

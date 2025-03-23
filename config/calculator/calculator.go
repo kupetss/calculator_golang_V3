@@ -251,7 +251,7 @@ func Eval(e string) (string, error) {
 	return fmt.Sprintf("%f", out), nil
 }
 
-func Calc(e string, id int) (float64, error) {
+func Calc(e string, id string) (float64, error) {
 	open := 0
 	start := -1
 	end := -1
@@ -292,9 +292,10 @@ func Calc(e string, id int) (float64, error) {
 	defer file.Close()
 
 	newRes := structs.ResponseResult{
-		Id:     id,
-		Status: "ok",
-		Result: out1,
+		Id:         id,
+		Status:     "ok",
+		Expression: e,
+		Result:     out1,
 	}
 
 	encoder := json.NewEncoder(file)

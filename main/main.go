@@ -1,13 +1,12 @@
 package main
 
 import (
+	"calculator_golangV3/config/calculator"
+	"calculator_golangV3/config/handlers"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-
-	"calculator_golangV3/config/calculator"
-	"calculator_golangV3/config/handlers"
 
 	"github.com/gorilla/mux"
 )
@@ -21,6 +20,13 @@ func enableCORS(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received request: %s %s", r.Method, r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -47,8 +53,15 @@ func StartServer() {
 	router.HandleFunc("/api/v1/expressions/{id}", handlers.HandleGet).Methods("GET")
 	router.HandleFunc("/api/v1/expressions", handlers.HandleList).Methods("GET")
 	router.HandleFunc("/internal/task", handlers.HandleOrchestrate).Methods("POST")
+	router.HandleFunc("/api/v1/history", handlers.HandleHistory).Methods("GET")
 
-	http.ListenAndServe(":8080", enableCORS(router))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/index.html")
+	}).Methods("GET")
+
+	http.ListenAndServe(":8080", enableCORS(loggingMiddleware(router)))
 }
 
 func main() {

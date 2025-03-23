@@ -20,6 +20,30 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func HandleHistory(w http.ResponseWriter, r *http.Request) {
+	file, err := os.Open("database/results.jsonl")
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprint(w, "err")
+		return
+	}
+	defer file.Close()
+
+	var history []structs.ResponseResult
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var res structs.ResponseResult
+		if err := json.Unmarshal(scanner.Bytes(), &res); err != nil {
+			continue
+		}
+		history = append(history, res)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	out, _ := json.Marshal(map[string][]structs.ResponseResult{"history": history})
+	fmt.Fprint(w, string(out))
+}
+
 func HandleCompute(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		d, err := ioutil.ReadAll(r.Body)
@@ -35,7 +59,7 @@ func HandleCompute(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		id := rand.Int()
+		id := strconv.FormatInt(rand.Int63(), 10)
 
 		go calculator.Calc(in.Expression, id)
 
@@ -52,19 +76,13 @@ func HandleCompute(w http.ResponseWriter, r *http.Request) {
 func HandleGet(w http.ResponseWriter, r *http.Request) {
 	p := mux.Vars(r)
 	idStr := p["id"]
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		w.WriteHeader(404)
-		res, _ := json.Marshal(map[string]structs.ResponseResult{"res": structs.ResponseResult{id, "err", 404}})
-		fmt.Fprint(w, string(res))
-		log.Println(string(res))
-		return
-	}
+
+	log.Printf("Checking ID: %s", idStr)
 
 	file, err := os.Open("database/results.jsonl")
 	if err != nil {
 		w.WriteHeader(500)
-		res, _ := json.Marshal(map[string]structs.ResponseResult{"res": structs.ResponseResult{id, "err", 500}})
+		res, _ := json.Marshal(map[string]structs.ResponseResult{"res": structs.ResponseResult{Id: idStr, Status: "err", Result: 500}})
 		fmt.Fprint(w, string(res))
 		log.Println(string(res))
 		return
@@ -77,7 +95,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request) {
 		if err := json.Unmarshal(scanner.Bytes(), &res); err != nil {
 			continue
 		}
-		if res.Id == id {
+		if res.Id == idStr {
 			w.WriteHeader(http.StatusOK)
 			out, _ := json.Marshal(map[string]structs.ResponseResult{"res": res})
 			fmt.Fprint(w, string(out))
@@ -87,7 +105,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(404)
-	out, _ := json.Marshal(map[string]structs.ResponseResult{"res": structs.ResponseResult{id, "not found", 404}})
+	out, _ := json.Marshal(map[string]structs.ResponseResult{"res": structs.ResponseResult{Id: idStr, Status: "not found", Result: 404}})
 	fmt.Fprint(w, string(out))
 	log.Println(string(out))
 }
@@ -112,7 +130,7 @@ func HandleList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	out, _ := json.Marshal(map[string][]structs.ResponseResult{"res": res})
+	out, _ := json.Marshal(map[string][]structs.ResponseResult{"history": res})
 	fmt.Fprint(w, string(out))
 	log.Println(string(out))
 }
