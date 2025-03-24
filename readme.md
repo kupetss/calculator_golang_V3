@@ -9,8 +9,8 @@ Git
 ```cmd
 git clone https://github.com/kupetss/calculator_golang_V3
 cd calculator_golang_V3/main
+start_server.bat
 ```
-Открываем start_server.bat
 Ждем 4 секунд, чтобы сервер успел запуститься
 Вот и все. Пользуйтесь на здоровье.
 Делал во время болезни. Не судите строго, пожалуйста
